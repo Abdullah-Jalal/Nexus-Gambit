@@ -1,0 +1,13 @@
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\controller\ChessController.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\PawnRules.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\KnightRules.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\RookRules.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\model\Board.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\model\Position.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\ChessApplication.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\model\Piece.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\BishopRules.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\CheckmateDetector.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\QueenRules.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\KingRules.java
+G:\chess\CHESS-GAME\CHESS-GAME\java-backend\src\main\java\com\chess\rules\GeneralRules.java

@@ -1,0 +1,313 @@
+main {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.information {
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  width: 380px;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #0f1729 0%, #1a2847 100%);
+  color: white;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.1);
+}
+
+.player-status {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: rgba(0, 212, 255, 0.05);
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* Updated to cyan glow for active player */
+.player-info.active {
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.player-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 18px;
+  color: white;
+}
+
+.player-avatar.white {
+  background: linear-gradient(135deg, #ffffff, #e0e0e0);
+  color: #1a2847;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.player-avatar.black {
+  background: linear-gradient(135deg, #1a1a1a, #000000);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.player-details h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.player-details p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.turn-indicator {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+/* Updated turn badge to cyan accent */
+.turn-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.turn-badge.white {
+  background: rgba(0, 212, 255, 0.1);
+  color: #00d4ff;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.turn-badge.black {
+  background: rgba(100, 100, 100, 0.1);
+  color: #a0a0a0;
+  border: 1px solid rgba(100, 100, 100, 0.3);
+}
+
+.game-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+/* Updated stats to cyan theme */
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #00d4ff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.moves-header {
+  margin-top: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.moves-header h4 {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #00d4ff;
+}
+
+.information > .moves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-grow: 1;
+  margin-top: 1rem;
+  overflow-y: auto;
+}
+
+.moves::-webkit-scrollbar {
+  width: 6px;
+}
+
+.moves::-webkit-scrollbar-track {
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 10px;
+}
+
+/* Updated scrollbar to cyan */
+.moves::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 10px;
+}
+
+.moves::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
+
+.move-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(0, 212, 255, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid rgba(0, 212, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.move-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-left-color: rgba(0, 212, 255, 0.5);
+}
+
+.move-number {
+  font-weight: bold;
+  color: rgba(0, 212, 255, 0.6);
+  min-width: 30px;
+}
+
+.move-text {
+  font-size: 14px;
+}
+
+.move-text.white-move {
+  color: #ffffff;
+}
+
+.move-text.black-move {
+  color: #888888;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal.hidden {
+  display: none;
+}
+
+/* Updated modal to cyan accent */
+.modal-content {
+  background: linear-gradient(135deg, #0f1729 0%, #1a2847 100%);
+  border: 2px solid rgba(0, 212, 255, 0.4);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  color: white;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 28px;
+  color: #00d4ff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.modal-content.endgame h2 {
+  margin-bottom: 1rem;
+  font-size: 32px;
+}
+
+.modal-content p {
+  margin: 0 0 2rem 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.promotion-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* Updated buttons to cyan theme */
+.promotion-options button,
+.restart-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #00d4ff 0%, #00f0ff 100%);
+  color: #000000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.promotion-options button:hover,
+.restart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 212, 255, 0.5);
+  background: linear-gradient(135deg, #00f0ff 0%, #00ffff 100%);
+}
+
+.restart-btn {
+  margin-top: 1rem;
+}

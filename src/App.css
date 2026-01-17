@@ -1,0 +1,7 @@
+#app {
+  overflow: hidden;
+  display: grid;
+  place-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 100%);
+}
