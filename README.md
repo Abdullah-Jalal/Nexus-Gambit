@@ -1,4 +1,6 @@
 ♟️ Nexus Gambit
+<img width="2816" height="1536" alt="Gemini_Generated_Image_mx7a6vmx7a6vmx7a" src="https://github.com/user-attachments/assets/43e66288-0aed-4636-9560-c759cca18d3e" />
+
 A High-Performance Full-Stack Chess Application
 
 📖 Overview
