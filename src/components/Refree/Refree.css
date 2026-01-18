@@ -2,12 +2,19 @@ main {
   display: flex;
   gap: 2rem;
   padding: 2rem;
+  /* FIX 1: Pins the board to the top so it doesn't move up/down */
+  align-items: flex-start;
+  /* FIX 2: Restricts the main view to the screen height */
+  height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevents the whole page from scrolling */
 }
 
 .information {
   display: flex;
   flex-direction: column;
-  max-height: 100vh;
+  /* FIX 3: Limits sidebar height to viewport minus padding */
+  max-height: calc(100vh - 4rem); 
   width: 380px;
   padding: 1.5rem;
   box-sizing: border-box;
@@ -24,6 +31,8 @@ main {
   gap: 1rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+  /* Prevent header from shrinking */
+  flex-shrink: 0;
 }
 
 .player-info {
@@ -38,7 +47,6 @@ main {
   border: 1px solid rgba(0, 212, 255, 0.1);
 }
 
-/* Updated to cyan glow for active player */
 .player-info.active {
   background: rgba(0, 212, 255, 0.15);
   border: 1px solid rgba(0, 212, 255, 0.4);
@@ -90,7 +98,6 @@ main {
   padding: 0.5rem 0;
 }
 
-/* Updated turn badge to cyan accent */
 .turn-badge {
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -118,9 +125,9 @@ main {
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin: 1.5rem 0;
+  flex-shrink: 0; /* Prevent stats from shrinking */
 }
 
-/* Updated stats to cyan theme */
 .stat {
   display: flex;
   flex-direction: column;
@@ -150,6 +157,7 @@ main {
   margin-top: 1.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+  flex-shrink: 0;
 }
 
 .moves-header h4 {
@@ -160,13 +168,16 @@ main {
   color: #00d4ff;
 }
 
+/* FIX 4: Correct Logic for scrollable move history */
 .information > .moves {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  flex-grow: 1;
+  flex-grow: 1; /* Fills remaining space */
   margin-top: 1rem;
-  overflow-y: auto;
+  overflow-y: auto; /* Adds scrollbar when full */
+  min-height: 0; /* Crucial for nested flex scrolling */
+  padding-right: 0.5rem; /* Space for scrollbar */
 }
 
 .moves::-webkit-scrollbar {
@@ -178,7 +189,6 @@ main {
   border-radius: 10px;
 }
 
-/* Updated scrollbar to cyan */
 .moves::-webkit-scrollbar-thumb {
   background: rgba(0, 212, 255, 0.3);
   border-radius: 10px;
@@ -196,6 +206,7 @@ main {
   border-radius: 6px;
   border-left: 3px solid rgba(0, 212, 255, 0.2);
   transition: all 0.2s ease;
+  flex-shrink: 0; /* Don't squash items */
 }
 
 .move-item:hover {
@@ -239,7 +250,6 @@ main {
   display: none;
 }
 
-/* Updated modal to cyan accent */
 .modal-content {
   background: linear-gradient(135deg, #0f1729 0%, #1a2847 100%);
   border: 2px solid rgba(0, 212, 255, 0.4);
@@ -286,7 +296,6 @@ main {
   gap: 1rem;
 }
 
-/* Updated buttons to cyan theme */
 .promotion-options button,
 .restart-btn {
   padding: 0.75rem 1.5rem;

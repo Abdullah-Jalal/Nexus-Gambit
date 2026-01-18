@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { initialBoard } from "../../Constants"
 import { Piece } from "../../models"
 import Chessboard from "../Chessboard/Chessboard"
@@ -10,21 +10,65 @@ import type { Position } from "../../models/Position"
 import type { Board } from "../../models/Board"
 import { PieceType, TeamType } from "../../Types"
 
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`
+}
+
 export default function Refree() {
   const [board, setBoard] = useState(initialBoard.clone())
   const [promotionPawn, setPromotionPawn] = useState<Piece | undefined>(undefined)
   const [modalMessage, setModalMessage] = useState("")
+  
+  const [whiteTime, setWhiteTime] = useState(600)
+  const [blackTime, setBlackTime] = useState(600)
+
   const modalRef = useRef<HTMLDivElement | null>(null)
   const endgameModalRef = useRef<HTMLDivElement | null>(null)
 
-  // --- Captured Count Logic ---
+  const currentPlayer = board.totalTurns % 2 === 0 ? "white" : "black"
   const totalPiecesOnBoard = board.pieces.length
   const capturedPiecesCount = 32 - totalPiecesOnBoard
+
+  useEffect(() => {
+    // FIX: Removed casting because stalemate is now a boolean property
+    if (board.winningTeam !== undefined || board.draw || board.stalemate) return
+
+    const timer = setInterval(() => {
+      if (currentPlayer === "white") {
+        setWhiteTime((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            handleTimeOut(TeamType.OPPONENT)
+            return 0
+          }
+          return prev - 1
+        })
+      } else {
+        setBlackTime((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            handleTimeOut(TeamType.OUR)
+            return 0
+          }
+          return prev - 1
+        })
+      }
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [currentPlayer, board.winningTeam, board.draw, board.stalemate])
+
+  function handleTimeOut(winningTeam: TeamType) {
+    const winnerName = winningTeam === TeamType.OUR ? "White" : "Black"
+    setModalMessage(`${winnerName} Wins by Timeout!`)
+    endgameModalRef.current?.classList.remove("hidden")
+  }
 
   async function playMove(playedPiece: Piece, destination: Position) {
     if (playedPiece.possibleMoves === undefined) return false
 
-    // Enforce Turn Order
     if (playedPiece.team === TeamType.OUR && board.totalTurns % 2 !== 0) return false
     if (playedPiece.team === TeamType.OPPONENT && board.totalTurns % 2 !== 1) return false
 
@@ -37,7 +81,6 @@ export default function Refree() {
       hasMoved: p.hasMoved,
     }))
 
-    // Call API
     const analyzeResponse = await analyzeMove({
       from: { x: playedPiece.position.x, y: playedPiece.position.y },
       to: { x: destination.x, y: destination.y },
@@ -58,24 +101,20 @@ export default function Refree() {
       const clonedBoard = prevBoard.clone()
       const nextTurn = clonedBoard.totalTurns + 1
 
-      // Execute move locally
       playedMoveIsValid = clonedBoard.playMove(enPassantMove, true, playedPiece, destination)
 
-      // --- CRASH FIX: Removed the lines that tried to write to read-only .draw/.stalemate ---
-      
-      // We only update the winningTeam if the game has progressed enough (Turn 4+)
-      // AND if the backend explicitly says there is a winner.
-      if (nextTurn >= 4) {
-        if (analyzeResponse.isCheckmate && analyzeResponse.winningTeam) {
-          const winner =
-            analyzeResponse.winningTeam === "w" || analyzeResponse.winningTeam === "white"
-              ? TeamType.OUR
-              : TeamType.OPPONENT
-          clonedBoard.winningTeam = winner
-        }
+      if (analyzeResponse.isCheckmate) {
+        const winner = (analyzeResponse.winningTeam === "w" || analyzeResponse.winningTeam === "white")
+          ? TeamType.OUR 
+          : TeamType.OPPONENT
+        clonedBoard.winningTeam = winner
       } else {
-        // If turn < 4, we ensure winningTeam is undefined to prevent early wins
-        clonedBoard.winningTeam = undefined;
+        clonedBoard.winningTeam = undefined
+      }
+      
+      // FIX: Assign directly to the new boolean property
+      if (analyzeResponse.isStalemate) {
+        clonedBoard.stalemate = true
       }
 
       clonedBoard.totalTurns = nextTurn
@@ -99,7 +138,6 @@ export default function Refree() {
 
   function isEnPassantMove(initialPosition: Position, desiredPosition: Position, type: PieceType, team: TeamType) {
     const pawnDirection = team === TeamType.OUR ? 1 : -1
-
     if (type === PieceType.PAWN) {
       if (
         (desiredPosition.x - initialPosition.x === -1 || desiredPosition.x - initialPosition.x === 1) &&
@@ -112,18 +150,14 @@ export default function Refree() {
             p.isPawn &&
             (p as any).enPassant,
         )
-        if (piece) {
-          return true
-        }
+        if (piece) return true
       }
     }
-
     return false
   }
 
   function promotePawn(pieceType: PieceType) {
     if (promotionPawn === undefined) return
-
     setBoard((previousBoard) => {
       const clonedBoard = board.clone()
       clonedBoard.pieces = clonedBoard.pieces.reduce((results: Piece[], piece) => {
@@ -134,45 +168,49 @@ export default function Refree() {
         }
         return results
       }, [] as Piece[])
-
       checkForEndGame(clonedBoard)
       return clonedBoard
     })
-
     modalRef.current?.classList.add("hidden")
   }
 
   function restartGame() {
     endgameModalRef.current?.classList.add("hidden")
     setBoard(initialBoard.clone())
+    setWhiteTime(600)
+    setBlackTime(600)
   }
 
   function checkForEndGame(board: Board) {
-    // --- 🛡️ UI SAFETY LOCK ---
-    // This is the most important line. 
-    // It prevents the "Game Over" modal from appearing if the game just started (< 4 turns).
-    // This suppresses any "fake" win/draw signals from the backend or local board state.
-    if (board.totalTurns < 4) return
-
     if (board.winningTeam !== undefined) {
-      setModalMessage(`The winning team is ${board.winningTeam === TeamType.OUR ? "white" : "black"}!`)
+      const winner = board.winningTeam === TeamType.OUR ? "White" : "Black"
+      setModalMessage(`${winner} Wins by Checkmate!`)
       endgameModalRef.current?.classList.remove("hidden")
-    } else if (board.draw) {
-      setModalMessage("It's a draw!")
-      endgameModalRef.current?.classList.remove("hidden")
-    } else if (board.stalemate) {
-      setModalMessage("It's a stalemate!")
+    } 
+    // FIX: Direct access
+    else if (board.stalemate) {
+      setModalMessage("Draw by Stalemate!")
       endgameModalRef.current?.classList.remove("hidden")
     }
   }
 
-  const currentPlayer = board.totalTurns % 2 === 0 ? "white" : "black"
-  const movesDisplay = board.moves.map((move, index) => (
+  // Helper to safely get move message
+  const getMoveMessage = (move: any) => {
+      if (!move) return "";
+      // If move is just a string or object, handle accordingly
+      // Assuming simple display for now or existing method
+      return move.toMessage ? move.toMessage() : "Move";
+  }
+
+  const movesDisplay = board.moves?.map((move: any, index: number) => (
     <div key={index} className="move-item">
       <span className="move-number">{Math.floor(index / 2) + 1}.</span>
-      <span className={`move-text ${index % 2 === 0 ? "white-move" : "black-move"}`}>{move.toMessage()}</span>
+      {/* Safe check for toMessage function */}
+      <span className={`move-text ${index % 2 === 0 ? "white-move" : "black-move"}`}>
+         {move.toMessage ? move.toMessage() : `${move.from} -> ${move.to}`}
+      </span>
     </div>
-  ))
+  )) || [];
 
   return (
     <main>
@@ -182,6 +220,7 @@ export default function Refree() {
             <div className="player-avatar white">W</div>
             <div className="player-details">
               <h3>Team White</h3>
+              <div className="timer">{formatTime(whiteTime)}</div>
             </div>
           </div>
           <div className="turn-indicator">
@@ -193,6 +232,7 @@ export default function Refree() {
             <div className="player-avatar black">B</div>
             <div className="player-details">
               <h3>Team Black</h3>
+              <div className="timer">{formatTime(blackTime)}</div>
             </div>
           </div>
         </div>
@@ -234,7 +274,7 @@ export default function Refree() {
       <div ref={endgameModalRef} className="modal hidden">
         <div className="modal-content endgame">
           <h2>{modalMessage}</h2>
-          <p>Play Again?</p>
+          <p>Game Over</p>
           <button className="restart-btn" onClick={restartGame}>
             New Game
           </button>

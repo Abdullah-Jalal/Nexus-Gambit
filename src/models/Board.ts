@@ -9,6 +9,7 @@ export interface BoardState {
   moves: Move[]
   enPassantMove?: any
   winningTeam?: any
+  stalemate?: boolean // Added to interface
 }
 
 export class Board {
@@ -17,6 +18,10 @@ export class Board {
   moves: Move[] = []
   enPassantMove: any = {}
   winningTeam: any = undefined
+  
+  // FIX: Changed from getters to real variables
+  stalemate: boolean = false; 
+  draw: boolean = false;
 
   constructor(pieces: Piece[], totalTurns: number, moves: Move[], enPassantMove: any, winningTeam: any) {
     this.pieces = pieces
@@ -27,13 +32,19 @@ export class Board {
   }
 
   clone(): Board {
-    return new Board(
+    const clonedBoard = new Board(
       this.pieces.map((p) => p.clone()),
       this.totalTurns,
       [...this.moves],
       this.enPassantMove,
       this.winningTeam,
     )
+    
+    // FIX: Copy the state variables
+    clonedBoard.stalemate = this.stalemate;
+    clonedBoard.draw = this.draw;
+    
+    return clonedBoard;
   }
 
   calculateAllMoves() {
@@ -77,13 +88,5 @@ export class Board {
 
   get currentTeam(): TeamType {
     return this.totalTurns % 2 === 0 ? TeamType.OUR : TeamType.OPPONENT
-  }
-
-  get draw(): boolean {
-    return false
-  }
-
-  get stalemate(): boolean {
-    return false
   }
 }

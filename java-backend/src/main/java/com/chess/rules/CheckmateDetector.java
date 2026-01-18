@@ -1,174 +1,112 @@
 package com.chess.rules;
 
-import com.chess.model.Position;
 import com.chess.model.Piece;
-
-import java.util.ArrayList;
+import com.chess.model.Position;
 import java.util.List;
+import java.util.ArrayList;
 
-/**
- * Detects if a side is in checkmate, stalemate, or check.
- * Checkmate = King is in check AND has no legal moves
- * Stalemate = King is NOT in check BUT has no legal moves
- */
 public class CheckmateDetector {
 
-    /**
-     * Checks if the given team is in checkmate
-     * IMPORTANT: Checkmate requires MINIMUM 4 moves (fool's mate)
-     */
-    public static boolean isCheckmate(String team, List<Piece> pieces, int totalMoves) {
-        if (totalMoves < 4) {
-            return false;
-        }
-        return isKingInCheck(team, pieces) && hasNoLegalMoves(team, pieces);
-    }
+    // --- 1. IS KING IN CHECK? ---
+    public static boolean isKingInCheck(String team, List<Piece> boardState) {
+        Position kingPos = findKingPosition(team, boardState);
+        if (kingPos == null) return false;
 
-    /**
-     * Checks if the given team is in stalemate
-     */
-    public static boolean isStalemate(String team, List<Piece> pieces, int totalMoves) {
-        if (totalMoves < 4) {
-            return false;
-        }
-        return !isKingInCheck(team, pieces) && hasNoLegalMoves(team, pieces);
-    }
-
-    /**
-     * Fixed: Now properly checks if opponent pieces can attack the king, including pawn captures
-     */
-    public static boolean isKingInCheck(String team, List<Piece> pieces) {
-        // Find the king of this team
-        Piece king = pieces.stream()
-                .filter(p -> p.getType().equalsIgnoreCase("KING") && p.getTeam().equals(team))
-                .findFirst()
-                .orElse(null);
-
-        if (king == null) {
-            return false;
-        }
-
-        // Check if any opponent piece can attack the king
-        String opponentTeam = team.equals("w") ? "b" : "w";
-        Position kingPos = king.getPosition();
+        String opponentTeam = team.toLowerCase().startsWith("w") ? "b" : "w";
         
-        for (Piece piece : pieces) {
-            if (!piece.getTeam().equals(opponentTeam)) {
-                continue;
-            }
-
-            // Special handling for pawns - they have unique capture logic
-            if (piece.getType().equalsIgnoreCase("PAWN")) {
-                if (PawnRules.canCapture(piece.getPosition(), kingPos, opponentTeam, pieces)) {
-                    return true;
-                }
-            } else {
-                // For other pieces, check if they can move to the king's position
-                if (isValidPieceMove(piece.getPosition(), kingPos, piece.getType(), opponentTeam, pieces)) {
-                    return true;
+        for (Piece p : boardState) {
+            if (GeneralRules.isSameTeam(p.getTeam(), opponentTeam)) {
+                // Special check for Pawns (capture logic only)
+                if (p.getType().equalsIgnoreCase("pawn")) {
+                    if (PawnRules.canCapture(p.getPosition(), kingPos, p.getTeam(), boardState)) return true;
+                } else {
+                    // Standard rules for other pieces
+                    if (canPieceAttackSquare(p, kingPos, boardState)) return true;
                 }
             }
         }
-
         return false;
     }
 
-    /**
-     * Checks if the given team has no legal moves
-     * FIXED: Now properly validates that moves don't leave king in check
-     */
-    private static boolean hasNoLegalMoves(String team, List<Piece> pieces) {
-        for (Piece piece : pieces) {
-            if (!piece.getTeam().equals(team)) continue;
+    // --- 2. IS CHECKMATE? (Check + No Escape) ---
+    public static boolean isCheckmate(String team, List<Piece> boardState, int totalMoves) {
+        if (!isKingInCheck(team, boardState)) return false;
+        return !hasLegalMoves(team, boardState);
+    }
 
-            List<Position> moves = getPossibleMovesForPiece(piece.getPosition(), piece.getType(), team, pieces);
+    // --- 3. IS STALEMATE? (No Check + No Moves) ---
+    public static boolean isStalemate(String team, List<Piece> boardState, int totalMoves) {
+        if (isKingInCheck(team, boardState)) return false;
+        return !hasLegalMoves(team, boardState);
+    }
 
-            for (Position move : moves) {
-                List<Piece> simulated = simulateMoveForCheck(pieces, piece.getPosition(), move);
-
-                if (!isKingInCheck(team, simulated)) {
-                    return false; // legal move exists
+    // --- HELPERS ---
+    
+    private static boolean hasLegalMoves(String team, List<Piece> boardState) {
+        for (Piece p : boardState) {
+            if (GeneralRules.isSameTeam(p.getTeam(), team)) {
+                // Try every possible geometric move
+                List<Position> candidates = getAllPotentialMoves(p, boardState);
+                for (Position dest : candidates) {
+                    // Simulate move
+                    List<Piece> simBoard = simulateMove(boardState, p.getPosition(), dest);
+                    // If King is SAFE after simulation, we have at least 1 legal move
+                    if (!isKingInCheck(team, simBoard)) return true;
                 }
             }
         }
-        return true; // no legal moves found
+        return false;
     }
 
-    private static List<Piece> simulateMoveForCheck(
-            List<Piece> original,
-            Position from,
-            Position to) {
-
-        List<Piece> copy = new ArrayList<>();
-
-        for (Piece p : original) {
-            copy.add(new Piece(
-                new Position(p.getPosition().getX(),
-                             p.getPosition().getY()),
-                p.getType(),
-                p.getTeam(),
-                p.isHasMoved()
-            ));
+    private static Position findKingPosition(String team, List<Piece> boardState) {
+        for (Piece p : boardState) {
+            if (p.getType().equalsIgnoreCase("king") && GeneralRules.isSameTeam(p.getTeam(), team)) {
+                return p.getPosition();
+            }
         }
+        return null;
+    }
 
-        // Remove piece at destination if exists (capture)
-        copy.removeIf(p ->
-            p.getPosition().getX() == to.getX() &&
-            p.getPosition().getY() == to.getY()
-        );
+    private static boolean canPieceAttackSquare(Piece attacker, Position target, List<Piece> boardState) {
+        Position from = attacker.getPosition();
+        String team = attacker.getTeam();
+        switch (attacker.getType().toLowerCase()) {
+            case "rook": return RookRules.isValidMove(from, target, team, boardState);
+            case "knight": return KnightRules.isValidMove(from, target, team, boardState);
+            case "bishop": return BishopRules.isValidMove(from, target, team, boardState);
+            case "queen": return QueenRules.isValidMove(from, target, team, boardState);
+            case "king": return KingRules.isValidMove(from, target, team, boardState);
+            default: return false;
+        }
+    }
 
-        // Move the piece
-        for (Piece p : copy) {
-            if (p.getPosition().samePosition(from)) {
-                p.setPosition(to);
+    private static List<Position> getAllPotentialMoves(Piece p, List<Piece> boardState) {
+        Position from = p.getPosition();
+        String team = p.getTeam();
+        switch (p.getType().toLowerCase()) {
+            case "pawn": return PawnRules.getPossibleMoves(from, team, boardState);
+            case "rook": return RookRules.getPossibleMoves(from, team, boardState);
+            case "knight": return KnightRules.getPossibleMoves(from, team, boardState);
+            case "bishop": return BishopRules.getPossibleMoves(from, team, boardState);
+            case "queen": return QueenRules.getPossibleMoves(from, team, boardState);
+            case "king": return KingRules.getPossibleMoves(from, team, boardState);
+            default: return new ArrayList<>();
+        }
+    }
+
+    private static List<Piece> simulateMove(List<Piece> original, Position from, Position to) {
+        List<Piece> sim = new ArrayList<>();
+        for (Piece p : original) {
+            sim.add(new Piece(new Position(p.getPosition().getX(), p.getPosition().getY()), 
+                              p.getType(), p.getTeam(), p.isHasMoved()));
+        }
+        sim.removeIf(p -> p.getPosition().getX() == to.getX() && p.getPosition().getY() == to.getY());
+        for (Piece p : sim) {
+            if (p.getPosition().getX() == from.getX() && p.getPosition().getY() == from.getY()) {
+                p.setPosition(new Position(to.getX(), to.getY()));
                 break;
             }
         }
-
-        return copy;
-    }
-
-    /**
-     * Helper: Get possible moves for a specific piece
-     */
-    private static List<Position> getPossibleMovesForPiece(Position from, String pieceType, String team, List<Piece> pieces) {
-        switch (pieceType.toLowerCase()) {
-            case "pawn":
-                return PawnRules.getPossibleMoves(from, team, pieces);
-            case "rook":
-                return RookRules.getPossibleMoves(from, team, pieces);
-            case "knight":
-                return KnightRules.getPossibleMoves(from, team, pieces);
-            case "bishop":
-                return BishopRules.getPossibleMoves(from, team, pieces);
-            case "queen":
-                return QueenRules.getPossibleMoves(from, team, pieces);
-            case "king":
-                return KingRules.getPossibleMoves(from, team, pieces);
-            default:
-                return List.of();
-        }
-    }
-
-    /**
-     * Helper: Check if a specific move is valid
-     */
-    private static boolean isValidPieceMove(Position from, Position to, String pieceType, String team, List<Piece> pieces) {
-        switch (pieceType.toLowerCase()) {
-            case "pawn":
-                return PawnRules.isValidMove(from, to, team, pieces);
-            case "rook":
-                return RookRules.isValidMove(from, to, team, pieces);
-            case "knight":
-                return KnightRules.isValidMove(from, to, team, pieces);
-            case "bishop":
-                return BishopRules.isValidMove(from, to, team, pieces);
-            case "queen":
-                return QueenRules.isValidMove(from, to, team, pieces);
-            case "king":
-                return KingRules.isValidMove(from, to, team, pieces);
-            default:
-                return false;
-        }
+        return sim;
     }
 }
